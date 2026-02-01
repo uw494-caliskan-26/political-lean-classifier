@@ -20,28 +20,20 @@ def analyze_political_leaning(text):
 
     # Extract specific probabilities
     p_left = probs[0].item()
-    p_center = probs[1].item()
     p_right = probs[2].item()
     
     # Calculate Continuous Score
-    continuous_score = p_right - p_left
+    continuous_score = (p_left - p_right + 1) / 2
 
     # Identify the specific predicted label
     labels = ["Left", "Center", "Right"]
     predicted_index = torch.argmax(probs).item()
     predicted_label = labels[predicted_index] # type: ignore
-    predicted_probability = probs[predicted_index].item() # type: ignore
     
     return {
         "text": text,
         "score": continuous_score,
-        "predicted_label": predicted_label,
-        "predicted_probability": predicted_probability,
-        "probabilities": {
-            "Left": f"{p_left:.4f}",
-            "Center": f"{p_center:.4f}",
-            "Right": f"{p_right:.4f}"
-        }
+        "label": predicted_label,
     }
 
 
@@ -52,6 +44,5 @@ if __name__ == "__main__":
 
     # --- Output ---
     print(f"Text: \"{result['text']}\"\n")
-    print(f"Continuous Score: {result['score']:.4f} (Scale: -1 Left to +1 Right)")
-    print(f"Predicted Label:  {result['predicted_label']} ({result['predicted_probability']:.2%} confidence)")
-    print(f"Raw Probabilities: {result['probabilities']}")
+    print(f"Score: {result['score']:.4f} (1 Right, 0 Left)")
+    print(f"Predicted Label:  {result['label']}")
