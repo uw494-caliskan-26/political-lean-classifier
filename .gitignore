@@ -1,5 +1,15 @@
+# os
+.venv
 .DS_Store
-.vscode/
-.git
-__pycache__/
+__pycache__
+
+
+# dependencies
+data/sample_data/
+data/formatted_sample_data/
+logs/
+models/
+
+
+# other
 test.ipynb
