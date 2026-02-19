@@ -56,7 +56,7 @@ def run_fine_tuning():
     )
 
     trainer.train()
-    trainer.save_model("./result/best_bias_model")
+    trainer.save_model("./results/best_bias_model")
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred

@@ -1,6 +1,7 @@
 # os
 .venv
 .DS_Store
+.vscode
 __pycache__
 
 
@@ -8,8 +9,8 @@ __pycache__
 data/*
 !data//README.md
 logs/
-models/
 
 
 # other
 test.ipynb
+models/
