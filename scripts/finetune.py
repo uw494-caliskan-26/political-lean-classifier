@@ -10,16 +10,18 @@ from transformers import (
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 MODEL_NAME = "roberta-base"
+DATASET_PATH = "./data/clean_data.parquet"
 
 def run_fine_tuning():
     # prepare dataset
-    df = pd.read_csv("cleaned_data.csv")
+    df = pd.read_parquet(DATASET_PATH)
     dataset = Dataset.from_pandas(df[['text', 'label']])
     dataset = dataset.train_test_split(test_size=0.2)
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
-    tokenized_datasets = dataset.map(tokenize_function, batched=True)
+    tokenized_datasets = dataset.map(
+        lambda examples: tokenizer(examples["text"], truncation=True, padding=True, max_length=512), batched=True)
 
     model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, num_labels=1)
 
@@ -37,6 +39,10 @@ def run_fine_tuning():
         greater_is_better=False,
         save_total_limit=2, 
         logging_steps=10,
+
+        fp16=True,       
+        dataloader_num_workers=2,
+        report_to="none"
     )
 
     trainer = Trainer(
@@ -51,9 +57,6 @@ def run_fine_tuning():
 
     trainer.train()
     trainer.save_model("./result/best_bias_model")
-
-def tokenize_function(examples):
-    return tokenizer(examples["text"], truncation=True, padding=True, max_length=512)
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred
