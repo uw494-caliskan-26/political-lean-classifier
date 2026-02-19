@@ -1,8 +1,8 @@
-import os
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-MODEL_DIR = "./results/best_bias_model"
+# Update this path to the fine-tuned model directory
+MODEL_DIR = "./models/finetuned_roberta"
 
 def load_model(model_dir=MODEL_DIR, device=None):
     if device is None:
@@ -12,6 +12,7 @@ def load_model(model_dir=MODEL_DIR, device=None):
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     model.to(device)
     model.eval()
+    
     return tokenizer, model, device
 
 

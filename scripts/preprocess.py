@@ -10,7 +10,7 @@ def preprocess(input_parquet, output_parquet):
 
     df['cleaned_news'] = df['news_text'].apply(clean_with_trafilatura)
 
-    df['text'] = df['title'].fillna('') + " " + df['cleaned_news'] # type: ignore
+    df['text'] = df['title'].fillna('') + "\n" + df['cleaned_news'] # type: ignore
     df['label'] = df['bias'].astype(float)
     
     df[['text', 'label']].to_parquet(output_parquet, index=False)
