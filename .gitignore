@@ -7,8 +7,7 @@ __pycache__
 
 # dependencies
 data/*
-!data//README.md
-logs/
+!data/README.md
 
 
 # other

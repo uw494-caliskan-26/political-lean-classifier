@@ -1,4 +1,8 @@
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
+import torch
 from datasets import Dataset
 from transformers import (
     AutoTokenizer, 
@@ -11,8 +15,29 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 MODEL_NAME = "roberta-base"
 DATASET_PATH = "./data/clean_data.parquet"
+MODEL_OUTPUT_DIR = "./results/best_bias_model"
+METRICS_OUTPUT_PATH = "./results/logs/training_metrics.csv"
+
+def save_training_metrics(log_history, output_path=METRICS_OUTPUT_PATH):
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Keep all trainer logs while ensuring core metric columns are easy to query.
+    metrics_df = pd.DataFrame(log_history)
+    core_columns = ["step", "epoch", "loss", "eval_loss", "learning_rate", "grad_norm"]
+    for column in core_columns:
+        if column not in metrics_df.columns:
+            metrics_df[column] = pd.NA
+
+    ordered_cols = core_columns + [col for col in metrics_df.columns if col not in core_columns]
+    metrics_df = metrics_df[ordered_cols]
+    metrics_df.to_csv(output_file, index=False)
+    return str(output_file)
 
 def run_fine_tuning():
+    use_cuda = torch.cuda.is_available()
+    print(f"CUDA available: {use_cuda}")
+
     # prepare dataset
     df = pd.read_parquet(DATASET_PATH)
     dataset = Dataset.from_pandas(df[['text', 'label']])
@@ -27,8 +52,10 @@ def run_fine_tuning():
 
     training_args = TrainingArguments(
         output_dir="./roberta-bias-regression",
-        eval_strategy="epoch",
-        save_strategy="epoch",
+        eval_strategy="steps",   # Evaluate based on steps, not epochs
+        eval_steps=100,          # Run evaluation every 100 steps
+        save_strategy="steps",   # Save strategy must match eval strategy if load_best_model_at_end=True
+        save_steps=1000,         # Save checkpoint every 1000 steps
         learning_rate=2e-5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
@@ -40,7 +67,7 @@ def run_fine_tuning():
         save_total_limit=2, 
         logging_steps=10,
 
-        fp16=True,       
+        fp16=use_cuda,
         dataloader_num_workers=2,
         report_to="none"
     )
@@ -55,11 +82,18 @@ def run_fine_tuning():
         compute_metrics=compute_metrics,
     )
 
+    print(f"Trainer resolved device: {trainer.args.device}")
+    print(f"Trainer n_gpu: {trainer.args.n_gpu}")
+
     trainer.train()
-    trainer.save_model("./results/best_bias_model")
+    trainer.save_model(MODEL_OUTPUT_DIR)
+    metrics_path = save_training_metrics(trainer.state.log_history)
+    print(f"Saved training metrics to: {metrics_path}")
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred
+    predictions = np.squeeze(predictions)
+    labels = np.squeeze(labels)
     mse = mean_squared_error(labels, predictions)
     mae = mean_absolute_error(labels, predictions)
     return {"mse": mse, "mae": mae}

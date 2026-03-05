@@ -4,7 +4,7 @@ from datasets import load_dataset
 DATASET_NAME = "pietrolesci/hyperpartisan_news_detection"
 SAVE_PATH = "./data/data.parquet"
 NUM_ROWS = 50000
-COLUMNS_TO_KEEP = ["news_text", "title", "bias"] 
+COLUMNS_TO_KEEP = ["news_text", "title", "bias", "url", "published_at"] 
 
 def download_subset():
     dataset = load_dataset(DATASET_NAME, split="train")

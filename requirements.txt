@@ -1,4 +1,15 @@
-torch
 transformers
 pandas
 datasets
+scikit-learn
+pyarrow
+numpy
+matplotlib
+seaborn
+tqdm
+trafilatura
+
+--index-url https://download.pytorch.org/whl/cu124
+torch
+torchvision
+torchaudio
