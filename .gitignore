@@ -13,3 +13,4 @@ data/*
 # other
 test.ipynb
 models/
+hf_repo/
